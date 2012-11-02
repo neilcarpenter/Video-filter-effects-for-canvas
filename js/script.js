@@ -34,7 +34,7 @@ var stats = new Stats();
 stats.setMode(0);
 stats.domElement.style.position = 'absolute';
 stats.domElement.style.left = '0px';
-stats.domElement.style.top = '62px';
+stats.domElement.style.top = '124px';
 stats.domElement.style.zIndex = 1;
 document.body.appendChild( stats.domElement );
 
@@ -59,6 +59,10 @@ function go() {
 		var value = e.target.value;
 		activeFilter = value ? value : activeFilter;
 	}, false);
+
+	document.getElementById('get-video').addEventListener('click', getVideo, false);
+	document.getElementById('snapshot').addEventListener('click', snapshot, false);
+	document.getElementById('fullscreen').addEventListener('click', fullscreen, false);
 
 }
 
@@ -119,12 +123,40 @@ function draw() {
 			grey();
 			ctx.drawImage(c2, 0, 0, winWidth, vHeight);
             break;
+        case 'invert':
+			invert();
+			ctx.drawImage(c2, 0, 0, winWidth, vHeight);
+            break;
+        case 'noise':
+			noise();
+			ctx.drawImage(c2, 0, 0, winWidth, vHeight);
+            break;
         case 'blur':
 			blur();
 			ctx.drawImage(c2, 0, 0, winWidth, vHeight);
             break;
         case 'sharpen':
 			sharpen();
+			ctx.drawImage(c2, 0, 0, winWidth, vHeight);
+            break;
+        case 'edges':
+			edges();
+			ctx.drawImage(c2, 0, 0, winWidth, vHeight);
+            break;
+        case 'lumos':
+			lumos();
+			ctx.drawImage(c2, 0, 0, winWidth, vHeight);
+            break;
+        case 'redCyan':
+			colorStuff(4);
+			ctx.drawImage(c2, 0, 0, winWidth, vHeight);
+            break;
+        case 'lines':
+			colorStuff(9);
+			ctx.drawImage(c2, 0, 0, winWidth, vHeight);
+            break;
+        case 'dots':
+			colorStuff(7);
 			ctx.drawImage(c2, 0, 0, winWidth, vHeight);
             break;
         default:
@@ -138,7 +170,8 @@ function draw() {
 function brighten(adj) {
 	// Get the picel data from the
 	var pixelData = getPixelData();
-	for (var i = 0; i < pixelData.data.length; i += 4 ) {
+	var pixelDataLen = pixelData.data.length;
+	for (var i = 0; i < pixelDataLen; i += 4 ) {
 		pixelData.data[i] += adj;
 		pixelData.data[i+1] += adj;
 		pixelData.data[i+2] += adj;
@@ -150,7 +183,8 @@ function brighten(adj) {
 // Thresholds the canvas image
 function threshold(t) {
 	var pixelData = getPixelData();
-	for (var i = 0; i < pixelData.data.length; i += 4 ) {
+	var pixelDataLen = pixelData.data.length;
+	for (var i = 0; i < pixelDataLen; i += 4 ) {
 		// Get the RGB values for this pixel
 		var r = pixelData.data[i];
 		var g = pixelData.data[i+1];
@@ -166,8 +200,9 @@ function threshold(t) {
 
 function grey() {
 	var pixelData = getPixelData();
+	var pixelDataLen = pixelData.data.length;
 	// Loop through each pixel and convert it to grey scale
-	for (var i = 0; i < pixelData.data.length; i += 4 ) {
+	for (var i = 0; i < pixelDataLen; i += 4 ) {
 		// Get the RGB values for this pixel
 		var r = pixelData.data[i];
 		var g = pixelData.data[i+1];
@@ -182,19 +217,75 @@ function grey() {
 	ctx2.putImageData(pixelData, 0, 0);
 }
 
+function invert() {
+	var pixelData = getPixelData();
+	var pixelDataLen = pixelData.data.length;
+
+	for (var i = 0; i < pixelDataLen; i += 4 ) {
+		// Get the RGB values for this pixel
+		var r = pixelData.data[i];
+		var g = pixelData.data[i+1];
+		var b = pixelData.data[i+2];
+
+		pixelData.data[i] = 255 - r;
+		pixelData.data[i+1] = 255 - g;
+		pixelData.data[i+2] = 255 - b;
+	}
+	// Draw the data on the visible canvas
+	ctx2.putImageData(pixelData, 0, 0);
+}
+
+function noise() {
+	var pixelData = getPixelData();
+	var pixelDataLen = pixelData.data.length;
+
+	for (var i = 0; i < pixelDataLen; i += 4 ) {
+		var rand =  (0.5 - Math.random()) * 70;
+		
+		var r = pixelData.data[i];
+		var g = pixelData.data[i+1];
+		var b = pixelData.data[i+2];
+
+		pixelData.data[i] = r + rand;
+		pixelData.data[i+1] = g + rand;
+		pixelData.data[i+2] = b + rand;
+	}
+	// Draw the data on the visible canvas
+	ctx2.putImageData(pixelData, 0, 0);
+}
+
 // Blurs the canvas image
 function blur() {
-	var weights = [1/9, 1/9, 1/9,
-				   1/9, 1/9, 1/9,
-				   1/9, 1/9, 1/9];
+	var weights = [
+		1/9, 1/9, 1/9,
+		1/9, 1/9, 1/9,
+		1/9, 1/9, 1/9];
 	convolute(weights);
 }
 
 // Sharpens the canvas image by applying a 3x3 sharpen filter
 function sharpen() {
-	var weights = [  0, -1,  0,
-    -1,  5, -1,
-     0, -1,  0 ];
+	var weights = [
+		0, -1,  0,
+		-1,  5, -1,
+		0, -1,  0 ];
+	convolute(weights);
+}
+
+// various places, inc here http://www.phpied.com/canvas-pixels-2-convolution-matrix/
+function edges() {
+	var weights = [
+		1, 1, 1,
+		1, -7, 1,
+		1, 1, 1 ];
+	convolute(weights);
+}
+
+function lumos() {
+	var weights = [
+		1, 0, 0,
+		0, 1, 0,
+		0, 0, 1 ];
 	convolute(weights);
 }
 
@@ -250,10 +341,56 @@ function getPixelData() {
 	return ctx2.getImageData(0, 0, c2Width, c2Height);
 }
 
+function colorStuff(number) {
+	var pixelData = getPixelData();
+	var data = pixelData.data;
+	var pixelDataLen = data.length;
+	// Loop through each pixel and convert it to grey scale
+	for (var i = 0; i < pixelDataLen; i += number ) {
+		
+		// Loop through the subpixels, convoluting each using an edge-detection matrix.
+        if( i % 4 == 3 ) continue;
+        data[i] = 127 + 2 * data[i] - data[i + 4] - data[i + c2Width * 4];
+
+	}
+	// Draw the data on the visible canvas
+	ctx2.putImageData(pixelData, 0, 0);
+}
+
+function getVideo() {
+	navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+	window.URL = window.URL || window.webkitURL;
+
+	navigator.getUserMedia({video: true}, function(localMediaStream) {
+		v.src = window.URL.createObjectURL(localMediaStream);
+
+	}, function(error) {
+		console.log(error);
+	});
+}
+
+function snapshot() {
+	window.open(c.toDataURL());
+}
+
+function fullscreen() {
+	document.body.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+	document.body.mozRequestFullScreen();
+	document.body.requestFullscreen();
+}
+
 window.onload = go();
 
 window.onresize = function () {
 
-	// add resizey stuff here. Or don't
+	winWidth = window.innerWidth;
+	winHeight = window.innerHeight;
+
+	vHeight = winWidth * ratio;
+	v.width = winWidth;
+	v.height = vHeight;
+
+	c.width = winWidth;
+	c.height = winHeight;
 
 };

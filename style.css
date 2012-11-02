@@ -11,3 +11,11 @@ html, body {
   top: 0;
   left: 0;
   background: rgba(255, 255, 255, 0.3); }
+
+#options {
+  z-index: 10;
+  position: absolute;
+  padding: 20px;
+  top: 62px;
+  left: 0;
+  background: rgba(255, 255, 255, 0.2); }
